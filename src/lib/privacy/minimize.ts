@@ -2,6 +2,7 @@ const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const PHONE_PATTERN = /(?<!\w)(?:\+?\d[\d\s().-]{7,}\d)(?!\w)/g;
 const CARD_PATTERN = /(?<!\d)(?:\d[ -]?){13,19}(?!\d)/g;
 const URL_PATTERN = /\bhttps?:\/\/[^\s]+/gi;
+const NAME_PATTERN = /\b(?:Mr|Ms|Mrs|Dr|Professor)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b/g;
 
 export interface PrivacyResult {
   text: string;
@@ -17,6 +18,7 @@ export function minimizePii(input: string): PrivacyResult {
     [EMAIL_PATTERN, "[EMAIL]"],
     [PHONE_PATTERN, "[PHONE]"],
     [CARD_PATTERN, "[NUMBER]"],
+    [NAME_PATTERN, "[NAME]"],
   ] as const) {
     text = text.replace(pattern, () => {
       redactions += 1;

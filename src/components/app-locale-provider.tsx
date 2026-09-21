@@ -84,6 +84,10 @@ const translations: TranslationMap = {
     "auth.noAccount": "Don't have an account?",
     "auth.haveAccount": "Already have an account?",
     "auth.forgotPassword": "Forgot password?",
+    "auth.forgotPasswordDescription":
+      "Enter your email to receive a password reset code.",
+    "auth.passwordResetComplete":
+      "Your password has been updated. You can now sign in with your new password.",
     "auth.errorTitle": "Error",
     "auth.invalidEmailOrPassword": "Invalid email or password",
     "auth.registrationFailed": "Registration failed",
@@ -292,6 +296,8 @@ const translations: TranslationMap = {
     "auth.noAccount": "还没有账户？",
     "auth.haveAccount": "已有账户？",
     "auth.forgotPassword": "忘记密码？",
+    "auth.forgotPasswordDescription": "输入邮箱以接收密码重置验证码。",
+    "auth.passwordResetComplete": "密码已更新。现在可以使用新密码登录。",
     "auth.errorTitle": "错误",
     "auth.invalidEmailOrPassword": "邮箱或密码错误",
     "auth.registrationFailed": "注册失败",

@@ -155,7 +155,7 @@ export const interviewRouter = router({
       let query = ctx.supabase
         .from("interviews")
         .select(
-          "*, questions(id), sessions(id), project:projects!inner(id, organizationId)",
+          "id, title, publicSlug, isActive, requireInvite, updatedAt, questions(id), sessions(id), project:projects!inner(id, organizationId)",
         )
         .order("updatedAt", { ascending: false })
         .limit(limit + 1);
@@ -1006,23 +1006,26 @@ export const interviewRouter = router({
       const interviewIds = (interviews ?? []).map((i: { id: string }) => i.id);
       if (interviewIds.length === 0) return emptyDashboard();
 
-      const { count: totalQuestions } = await ctx.supabase
-        .from("questions")
-        .select("id", { count: "exact", head: true })
-        .in("interviewId", interviewIds);
-
-      const { data: sessions } = await ctx.supabase
-        .from("sessions")
-        .select(
-          "id, interviewId, status, modeUsed, totalDurationSeconds, themes, createdAt, participantName, participantEmail, insights",
-        )
-        .in("interviewId", interviewIds);
-      const allSessions = sessions ?? [];
-
-      const { data: questionRows } = await ctx.supabase
-        .from("questions")
-        .select("id, type, createdAt")
-        .in("interviewId", interviewIds);
+      const [questionCountResult, sessionsResult, questionRowsResult] =
+        await Promise.all([
+          ctx.supabase
+            .from("questions")
+            .select("id", { count: "exact", head: true })
+            .in("interviewId", interviewIds),
+          ctx.supabase
+            .from("sessions")
+            .select(
+              "id, interviewId, status, totalDurationSeconds, themes, createdAt, participantName, participantEmail, insights",
+            )
+            .in("interviewId", interviewIds),
+          ctx.supabase
+            .from("questions")
+            .select("id, type, createdAt")
+            .in("interviewId", interviewIds),
+        ]);
+      const totalQuestions = questionCountResult.count;
+      const allSessions = sessionsResult.data ?? [];
+      const questionRows = questionRowsResult.data ?? [];
 
       // Message counts per session (batch)
       let totalMessages = 0;

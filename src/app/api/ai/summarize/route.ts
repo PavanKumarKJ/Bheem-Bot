@@ -5,6 +5,8 @@ import { buildSummaryPrompt } from "@/lib/ai/prompts/summary";
 import { getProvider, REPORT_MODEL } from "@/lib/ai/registry";
 import { getAuthUser } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { minimizePii } from "@/lib/privacy/minimize";
+import { PIIDetector } from "@/lib/privacy/pii-detector";
 import { NextResponse } from "next/server";
 
 const log = createLogger("api/ai/summarize");
@@ -90,9 +92,27 @@ export async function POST(req: Request) {
 
     const provider = getProvider(REPORT_MODEL);
     log.info(`Generating report with ${provider.id}/${REPORT_MODEL}`);
+    const piiDetector = new PIIDetector();
     const textMessages = msgs
       .filter((m) => m.contentType === "TEXT")
-      .map((m) => ({ role: m.role, content: m.content }));
+      .map((m) => {
+        const reducedText = minimizePii(m.content);
+        const detectedPII = piiDetector.detectPII(m.content);
+        if (detectedPII.length > 0) {
+          void supabaseAdmin.from("privacy_events").insert({
+            session_id: sessionId,
+            pii_types: detectedPII.map((entry) => entry.type),
+            pii_count: detectedPII.length,
+            original_content: m.content,
+            masked_content: reducedText.text,
+            confidence_threshold: 0.7,
+          });
+          log.info(
+            `PII detected and minimized for report generation: ${detectedPII.length} entities`,
+          );
+        }
+        return { role: m.role, content: reducedText.text };
+      });
     const drawingsInput =
       whiteboardDrawings.length > 0 ? whiteboardDrawings : null;
     const codeInput = codeSnippetsInput.length > 0 ? codeSnippetsInput : null;
